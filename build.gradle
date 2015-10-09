@@ -1,0 +1,29 @@
+buildscript {
+    ext.kotlin_version = '0.14.449'
+    ext.restler_version = '0.4.0'
+
+    repositories {
+	mavenCentral()
+    }
+    dependencies {
+	classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+subprojects {
+
+	apply plugin: 'kotlin'
+
+	repositories {
+	    mavenCentral()
+	    mavenLocal()
+	}
+
+	dependencies {
+	    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+	}
+
+	sourceSets {
+	    main.java.srcDirs += 'src/main/kotlin'
+	}
+}

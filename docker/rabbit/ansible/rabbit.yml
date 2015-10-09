@@ -1,0 +1,18 @@
+---
+
+- hosts: localhost
+  connection: local
+  sudo: true
+
+  tasks:
+    - name: ensure python-software-properties is installed
+      apt: pkg=python-software-properties state=installed
+
+    - name: add rabbitmq official apt repository
+      apt_repository: repo='deb http://www.rabbitmq.com/debian/ testing main' state=present
+
+    - name: install rabbitmq
+      apt: pkg=rabbitmq-server state=installed force=yes
+
+    - name: enable rabbitmq plugins
+      rabbitmq_plugin: names=rabbitmq_management,rabbitmq_tracing,rabbitmq_federation state=enabled
