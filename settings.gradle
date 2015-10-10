@@ -1,1 +1,1 @@
-include 'jic-agent', 'jic-agent-api', 'jic-client', 'jic-front'
+include 'jic-agent', 'jic-agent-api', 'jic-client', 'jic-front', 'jic-gradle-plugin'

@@ -121,7 +121,7 @@ object Main {
                     }
                 }
                 val out = File(jic, "out.zip")
-                val agent = Agent(File("/home/azhidkov/jet8040/"), jar, out)
+                val agent = Agent(File("/data/tmp/jet11.0-eval-amd64"), jar, out)
                 agent.compile()
                 agent.pack()
                 val id = uploadFile(out)
