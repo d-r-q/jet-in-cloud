@@ -6,6 +6,7 @@ import com.rabbitmq.client.*
 import jic.agent.AgentApi
 import jic.agent.CompilationResult
 import jic.agent.CompilationTask
+import jic.agent.Platform
 import jic.front.files.Files
 import jic.front.tasks.Tasks
 import spark.Spark.get
@@ -29,6 +30,7 @@ object Dispatcher {
         val conn = cf.newConnection()
         c = conn.createChannel()
         val ch = c.queueDeclare(AgentApi.linuxTaskQueue, false, false, false, null)
+        val winTasksQueue = c.queueDeclare(AgentApi.winTaskQueue, false, false, false, null)
         val resultsQueue = c.queueDeclare(AgentApi.resultsQueueName, false, false, false, null)
 
         Runtime.getRuntime().addShutdownHook(object : Thread() {
@@ -43,7 +45,7 @@ object Dispatcher {
                 val msg = String(body, "UTF-8")
                 println(msg)
                 val result = mapper.readValue(msg, CompilationResult::class.java)
-                Tasks.setResult(UUID.fromString(result.taskId), UUID.fromString(result.resultId))
+                Tasks.setResult(UUID.fromString(result.taskId), result.platform, UUID.fromString(result.resultId))
             }
         }
         c.basicConsume(AgentApi.resultsQueueName, true, cons)
@@ -72,6 +74,7 @@ object Front {
             val cmpTask = CompilationTask(name = name, taskId = task.toString(),
                     downloadUrl =  "http://${req.host()}/download/$uid", uploadUrl = "http://${req.host()}/upload")
             Dispatcher.post(mapper.writeValueAsString(cmpTask), AgentApi.linuxTaskQueue)
+            Dispatcher.post(mapper.writeValueAsString(cmpTask), AgentApi.winTaskQueue)
             task
         }
 
@@ -86,10 +89,11 @@ object Front {
             uid
         }
 
-        get("/result/:taskUid") { req, res ->
+        get("/result/:taskUid/:platform") { req, res ->
             val taskUid = req.params("taskUid")
+            val platform = Platform.valueOf(req.params("platform"))
             val task = Tasks.get(UUID.fromString(taskUid))
-            task?.resultId ?: "null"
+            task?.result(platform) ?: "null"
         }
 
         get("/download/:uid") { req, res ->

@@ -11,7 +11,7 @@ object Main {
         with(JicClient()) {
             val fileUid = upload(file)
             val taskId = compile(fileUid)
-            val resultId = waitForResult(taskId)
+            val resultId = waitForResult(taskId, "LINUX")
             download(resultId, File("/tmp/jic-client/out.zip"))
             close()
         }

@@ -57,11 +57,7 @@ class Agent(private val jetHome: File,
     }
 
     private fun String.e(workDir: File): Int {
-        val env = arrayOf(
-                "PATH=${jetHome.absolutePath}/bin:\$PATH",
-                "LD_LIBRARY_PATH=${jetHome.absolutePath}/lib/x86/shared:\$LD_LIBRARY_PATH"
-        )
-        val proc = Runtime.getRuntime().exec(this, env, workDir)
+        val proc = Runtime.getRuntime().exec(this, Os.env(jetHome), workDir)
         proc.inputStream.reader().forEachLine { println(it.toString()) }
         proc.errorStream.reader().forEachLine { System.err.println(it.toString()) }
         proc.waitFor()
@@ -73,7 +69,7 @@ object Main {
 
     private val mapper = ObjectMapper()
 
-    private val jic = File("/tmp/jic-agent")
+    private val jic = Os.jicHome()
 
     init {
         mapper.registerModule(ParanamerModule())
@@ -97,6 +93,8 @@ object Main {
     }
 
     @JvmStatic fun main(args: Array<String>) {
+
+        val jetHome = args[2]
 
         val cf = ConnectionFactory()
         cf.host = args[0]
@@ -132,19 +130,19 @@ object Main {
                 }
                 println("Downloaded")
                 val out = File(jic, "out.zip")
-                val agent = Agent(File("/data/tmp/jet11.0-eval-amd64"), jar, out)
+                val agent = Agent(File(jetHome), jar, out)
                 agent.compile()
                 println("Packing result")
                 agent.pack()
                 println("Result packed")
                 val id = uploadFile(out, task.uploadUrl)
                 println("Result uploaded")
-                val result = CompilationResult(taskId = task.taskId, resultId = id)
+                val result = CompilationResult(taskId = task.taskId, resultId = id, platform = Os.platform())
                 channel.basicPublish("", AgentApi.resultsQueueName, null, mapper.writeValueAsString(result).toByteArray())
                 println("Result published")
             }
         }
-        channel.basicConsume(AgentApi.linuxTaskQueue, true, cons)
+        channel.basicConsume(Os.queueName(), true, cons)
         println("Consuming started")
     }
 }

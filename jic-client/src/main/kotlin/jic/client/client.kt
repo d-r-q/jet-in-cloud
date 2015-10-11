@@ -23,10 +23,10 @@ class JicClient(private val baseUrl: String = "http://localhost:4567") {
         }
     }
 
-    public fun waitForResult(taskId: String): String? {
+    public fun waitForResult(taskId: String, platform: String): String? {
         val statues = sequence {
             Thread.sleep(1000)
-            val status = HttpGet(base("result/$taskId"))
+            val status = HttpGet(base("result/$taskId/$platform"))
             val res = httpClient.execute(status).entity.content.bufferedReader().readText()
             print("                             ${System.currentTimeMillis()}: $res\r")
             res

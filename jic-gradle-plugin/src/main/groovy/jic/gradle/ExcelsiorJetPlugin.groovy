@@ -28,10 +28,16 @@ class ExcelsiorJetPlugin implements Plugin<Project> {
                 println("Compiling jar")
                 def taskId = client.compile(fileId)
                 println("Waiting for result")
-                def resultId = client.waitForResult(taskId)
-                println("Download exe")
-                client.download(resultId, new File('build/jet', jar.name))
-                println("exe downloaded")
+
+                def linuxResultId = client.waitForResult(taskId, "LINUX")
+                println("Download linux bin")
+                client.download(linuxResultId, new File('build/jet', jar.name + ".linux.zip"))
+                println("linux bin downloaded")
+
+                def winResultId = client.waitForResult(taskId, "WIN")
+                println("Download win bin")
+                client.download(winResultId, new File('build/jet', jar.name + ".win.zip"))
+                println("win bin downloaded")
             } finally {
                 client.close()
             }

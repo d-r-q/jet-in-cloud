@@ -2,5 +2,16 @@ dependencies {
     compile 'com.rabbitmq:amqp-client:3.5.6',
             'org.apache.httpcomponents:httpclient:4.5.1',
             'org.apache.httpcomponents:httpmime:4.5.1',
+            'org.apache.commons:commons-lang3:3.4',
             project(':jic-agent-api')
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File Example',
+                'Main-Class': 'jic.agent.Main'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
