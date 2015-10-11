@@ -10,11 +10,9 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.impl.client.HttpClients
-import sun.tools.jar.resources.jar
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
-import java.net.URLConnection
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -81,12 +79,13 @@ object Main {
         mapper.registerModule(ParanamerModule())
     }
 
-    private fun uploadFile(result: File): String {
+    private fun uploadFile(result: File, url: String): String {
 
         val httpClient = HttpClients.createDefault()
-        val uploadFile = HttpPost("http://localhost:4567/upload")
+        val uploadFile = HttpPost(url)
 
         val builder = MultipartEntityBuilder.create()
+        println("Uploading file size: ${result.length()}")
         builder.addBinaryBody("file", result, ContentType.APPLICATION_OCTET_STREAM, result.name)
         val multipart = builder.build()
 
@@ -100,12 +99,14 @@ object Main {
     @JvmStatic fun main(args: Array<String>) {
 
         val cf = ConnectionFactory()
-        cf.host = "localhost"
+        cf.host = args[0]
         cf.username = "user"
-        cf.password = "password"
+        cf.password = args[1]
         val conn = cf.newConnection()
+        println("Connection created")
 
         val channel = conn.createChannel()
+        println("channel created")
 
         val cons = object : DefaultConsumer(channel) {
             override fun handleDelivery(consumerTag: String?, envelope: Envelope?, properties: AMQP.BasicProperties?, body: ByteArray) {
@@ -115,20 +116,35 @@ object Main {
                 println(msg)
                 val task = mapper.readValue(msg, CompilationTask::class.java)
                 val jar = File(jic, task.name + ".jar")
-                URL(task.downloadUrl).openConnection().inputStream.use { input ->
+                println("Downloading jar")
+                val openConnection = URL(task.downloadUrl).openConnection()
+                println("Connection opened")
+                openConnection.doOutput = false
+                openConnection.doInput = true
+
+                val inputStream = openConnection.inputStream
+                println("input stream created")
+                inputStream.use { input ->
                     FileOutputStream(jar).use {
+                        println("Copying ")
                         input.copyTo(it)
                     }
                 }
+                println("Downloaded")
                 val out = File(jic, "out.zip")
                 val agent = Agent(File("/data/tmp/jet11.0-eval-amd64"), jar, out)
                 agent.compile()
+                println("Packing result")
                 agent.pack()
-                val id = uploadFile(out)
+                println("Result packed")
+                val id = uploadFile(out, task.uploadUrl)
+                println("Result uploaded")
                 val result = CompilationResult(taskId = task.taskId, resultId = id)
                 channel.basicPublish("", AgentApi.resultsQueueName, null, mapper.writeValueAsString(result).toByteArray())
+                println("Result published")
             }
         }
         channel.basicConsume(AgentApi.linuxTaskQueue, true, cons)
+        println("Consuming started")
     }
 }

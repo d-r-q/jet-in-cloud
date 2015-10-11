@@ -27,7 +27,9 @@ class JicClient(private val baseUrl: String = "http://localhost:4567") {
         val statues = sequence {
             Thread.sleep(1000)
             val status = HttpGet(base("result/$taskId"))
-            httpClient.execute(status).entity.content.bufferedReader().readText()
+            val res = httpClient.execute(status).entity.content.bufferedReader().readText()
+            print("                             ${System.currentTimeMillis()}: $res\r")
+            res
         }
         val resultId = statues.find { it != "null" }
         return resultId
