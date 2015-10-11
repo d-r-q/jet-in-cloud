@@ -7,10 +7,11 @@ object Os {
 
     public fun env(jetHome: File) = when {
         SystemUtils.IS_OS_LINUX ->
-            arrayOf(
-                    "PATH=${jetHome.absolutePath}/bin:\$PATH",
+            arrayOf("PATH=${jetHome.absolutePath}/bin:\$PATH",
                     "LD_LIBRARY_PATH=${jetHome.absolutePath}/lib/x86/shared:\$LD_LIBRARY_PATH")
-        else -> arrayOf<String>()
+        else ->
+            arrayOf("PATH=${jetHome.absolutePath}\\bin;\$PATH",
+                    "LD_LIBRARY_PATH=${jetHome.absolutePath}\\lib\\x86\\shared;\$LD_LIBRARY_PATH")
     }
 
     public fun jicHome(): File = File(SystemUtils.getJavaIoTmpDir(), "jic-agent")

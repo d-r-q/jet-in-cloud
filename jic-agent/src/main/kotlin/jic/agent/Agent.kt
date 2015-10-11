@@ -41,8 +41,12 @@ class Agent(private val jetHome: File,
     fun pack() {
         val out = ZipOutputStream(FileOutputStream(out))
         target.walkTopDown().forEach {
-            val entryName = it.absolutePath.substring(target.absolutePath.length()) +
+            val entryName = it.absolutePath.
+                    substring(target.absolutePath.length()).
+                    replace("\\", "/") +
                     if (it.isDirectory) "/" else ""
+
+            println("Adding entry $entryName")
             if (entryName.isEmpty()) {
                 return@forEach
             }
