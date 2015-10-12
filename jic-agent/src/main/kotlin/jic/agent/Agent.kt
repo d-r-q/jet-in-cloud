@@ -41,15 +41,15 @@ class Agent(private val jetHome: File,
     fun pack() {
         val out = ZipOutputStream(FileOutputStream(out))
         target.walkTopDown().forEach {
+            if (it == target) {
+                return@forEach
+            }
             val entryName = it.absolutePath.
-                    substring(target.absolutePath.length()).
+                    substring(target.absolutePath.length() + 1).
                     replace("\\", "/") +
                     if (it.isDirectory) "/" else ""
 
             println("Adding entry $entryName")
-            if (entryName.isEmpty()) {
-                return@forEach
-            }
             val zipEntry = ZipEntry(entryName)
             out.putNextEntry(zipEntry)
             if (it.isFile) {
