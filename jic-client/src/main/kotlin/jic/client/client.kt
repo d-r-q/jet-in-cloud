@@ -17,7 +17,7 @@ class JicClient(private val baseUrl: String = "http://localhost:4567") {
         jar.deleteRecursively()
         jar.parentFile.mkdirs()
         URL(base("download/$resultId")).openConnection().inputStream.use { input ->
-            FileOutputStream(jar).use {
+            ObservableOutputStream(FileOutputStream(jar), OsObserver()).use {
                 input.copyTo(it)
             }
         }
